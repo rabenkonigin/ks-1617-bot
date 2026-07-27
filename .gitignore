@@ -18,3 +18,4 @@
 !.github/workflows/
 !.github/workflows/docker.yml
 !.github/workflows/fly-deploy.yml
+!fly.toml

@@ -1,0 +1,16 @@
+app = "ks-1617-bot"
+primary_region = "sin"
+
+[build]
+  dockerfile = "docker/Dockerfile"
+
+[env]
+  UPDATE = "0"
+
+[[mounts]]
+  source = "kingshot_db"
+  destination = "/app/db"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
