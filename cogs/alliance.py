@@ -191,8 +191,8 @@ class Alliance(commands.Cog):
     async def settings(self, interaction: discord.Interaction):
         try:
             if interaction.guild is not None: # Check bot permissions only if in a guild
-                perm_check = interaction.guild.get_member(interaction.client.user.id)
-                if not perm_check.guild_permissions.administrator:
+                perm_check = interaction.guild.me
+                if perm_check is None or not perm_check.guild_permissions.administrator:
                     await interaction.response.send_message(
                         f"Beeb boop {theme.robotIcon} I need **Administrator** permissions to function. "
                         "Go to server settings --> Roles --> find my role --> scroll down and turn on Administrator", 
@@ -943,11 +943,6 @@ class Alliance(commands.Cog):
 
             with sqlite3.connect('db/settings.sqlite', timeout=30.0) as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM invalid_id_tracker WHERE alliance_id = ?", (str(alliance_id),))
-                invalid_tracker_count = cursor.fetchone()[0]
-
-            with sqlite3.connect('db/settings.sqlite', timeout=30.0) as conn:
-                cursor = conn.cursor()
                 cursor.execute("SELECT COUNT(*) FROM alliance_logs WHERE alliance_id = ?", (alliance_id,))
                 alliance_logs_count = cursor.fetchone()[0]
 
@@ -965,7 +960,6 @@ class Alliance(commands.Cog):
                     f"{theme.allianceIcon} Admin Server Records: {admin_server_count}\n"
                     f"{theme.announceIcon} Gift Channels: {gift_channels_count}\n"
                     f"{theme.chartIcon} Gift Code Controls: {gift_code_control_count}\n"
-                    f"{theme.deniedIcon} Invalid ID Tracker: {invalid_tracker_count}\n"
                     f"{theme.listIcon} Alliance Logs: {alliance_logs_count}\n\n"
                     f"**{theme.warnIcon} WARNING: This action cannot be undone!**"
                 ),
@@ -989,9 +983,6 @@ class Alliance(commands.Cog):
                         cursor = conn.cursor()
                         cursor.execute("DELETE FROM adminserver WHERE alliances_id = ?", (alliance_id,))
                         admin_server_count = cursor.rowcount
-
-                        cursor.execute("DELETE FROM invalid_id_tracker WHERE alliance_id = ?", (str(alliance_id),))
-                        invalid_tracker_deleted = cursor.rowcount
 
                         cursor.execute("DELETE FROM alliance_logs WHERE alliance_id = ?", (alliance_id,))
                         alliance_logs_deleted = cursor.rowcount
@@ -1029,7 +1020,6 @@ class Alliance(commands.Cog):
                             f"{theme.allianceIcon} Admin Server Records: {admin_server_count}\n"
                             f"{theme.announceIcon} Gift Channels: {gift_channels_count}\n"
                             f"{theme.chartIcon} Gift Code Controls: {gift_code_control_count}\n"
-                            f"{theme.deniedIcon} Invalid ID Tracker: {invalid_tracker_deleted}\n"
                             f"{theme.listIcon} Alliance Logs: {alliance_logs_deleted}"
                         ),
                         color=theme.emColor3
@@ -1254,8 +1244,8 @@ class AddAllianceModal(discord.ui.Modal):
                 )
                 alliance_id = cursor.lastrowid
                 cursor.execute(
-                    "INSERT INTO alliancesettings (alliance_id, channel_id, interval, start_time) "
-                    "VALUES (?, NULL, 0, NULL)",
+                    "INSERT INTO alliancesettings (alliance_id, channel_id, interval) "
+                    "VALUES (?, NULL, 0)",
                     (alliance_id,),
                 )
                 conn.commit()

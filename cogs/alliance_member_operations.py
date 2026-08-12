@@ -200,7 +200,7 @@ class MemberListView(discord.ui.View):
         ("Name A→Z",  lambda m: m['nickname'].casefold(),                      False),
         ("Name Z→A",  lambda m: m['nickname'].casefold(),                      True),
         ("ID \u2191",      lambda m: m['fid'],                                       False),
-        ("State \u2191",   lambda m: (m['kid'], -m['furnace_lv']),                  False),
+        ("State \u2191",   lambda m: (m['kid'] is None, m['kid'] or 0, -m['furnace_lv']), False),
     ]
 
     def __init__(self, members, alliance_id, alliance_name, cog, author_id):
@@ -768,7 +768,7 @@ class ManageMembersView(MemberListView):
                 f"**Format**\n"
                 f"{theme.upperDivider}\n"
                 f"• Header row with an **`ID`** (or `FID`) column, or the bot's export file as-is.\n"
-                f"• Add a **`Name`** and/or **`TC Level`** column to set them - members already "
+                f"• Add a **`Name`** and/or **`TC Level`** column to set them. Members already "
                 f"in the alliance get updated, new ones are added already named.\n"
                 f"• Levels take either form: `82` or `TC 10-2`.\n"
                 f"• A plain list of IDs (one per line or comma-separated) works too.\n"
@@ -2566,7 +2566,8 @@ class IDSearchModal(discord.ui.Modal):
                 with sqlite3.connect('db/alliance.sqlite') as alliance_db:
                     cursor = alliance_db.cursor()
                     cursor.execute("SELECT name FROM alliance_list WHERE alliance_id = ?", (current_alliance_id,))
-                    current_alliance_name = cursor.fetchone()[0]
+                    row = cursor.fetchone()
+                    current_alliance_name = row[0] if row else "Unknown"
 
                 # Handle remove context
                 if self.context == "remove":
@@ -2656,7 +2657,7 @@ class IDSearchModal(discord.ui.Modal):
                 # Handle giftcode context - validate permission and invoke callback with alliance
                 if self.context == "giftcode":
                     # Check if user has permission to manage this alliance
-                    has_permission = any(aid == current_alliance_id for aid, _, _ in self.alliances)
+                    has_permission = any(str(aid) == str(current_alliance_id) for aid, _, _ in self.alliances)
                     if not has_permission:
                         await interaction.response.send_message(
                             f"{theme.deniedIcon} You don't have permission to manage the alliance this member belongs to.",
@@ -2693,7 +2694,7 @@ class IDSearchModal(discord.ui.Modal):
                             description=f"ID: {alliance_id}",
                             emoji=theme.allianceIcon
                         ) for alliance_id, name, _ in self.alliances
-                        if alliance_id != current_alliance_id
+                        if str(alliance_id) != str(current_alliance_id)
                     ]
                 )
 

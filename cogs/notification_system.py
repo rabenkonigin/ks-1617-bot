@@ -70,12 +70,12 @@ def check_mention_placeholder_misuse(text: str, is_embed: bool = False) -> str |
         if is_embed:
             return (
                 f"{theme.warnIcon} You typed `{examples}` but mentions don't work inside embeds.\n"
-                f"Use `{{tag}}` instead - it will add the mention above the embed."
+                f"Use `{{tag}}` instead. It will add the mention above the embed."
             )
         else:
             return (
                 f"{theme.warnIcon} You typed `{examples}` but this won't ping anyone.\n"
-                f"Use `{{tag}}` instead - it will be replaced with your configured mention."
+                f"Use `{{tag}}` instead. It will be replaced with your configured mention."
             )
     return None
 
@@ -137,7 +137,7 @@ class QuarantinedNotificationActionView(discord.ui.View):
             return
         msg = (f"{theme.verifiedIcon} Re-enabled **{affected}** notification(s)."
                if affected else
-               f"{theme.infoIcon} Already resolved — nothing matched.")
+               f"{theme.infoIcon} Already resolved. Nothing matched.")
         await interaction.response.edit_message(content=msg, embed=None, view=None)
 
     async def _on_delete(self, interaction: discord.Interaction):
@@ -159,7 +159,7 @@ class QuarantinedNotificationActionView(discord.ui.View):
             return
         msg = (f"{theme.verifiedIcon} Permanently deleted **{affected}** notification(s)."
                if affected else
-               f"{theme.infoIcon} Already resolved — nothing matched.")
+               f"{theme.infoIcon} Already resolved. Nothing matched.")
         await interaction.response.edit_message(content=msg, embed=None, view=None)
 
 
@@ -624,7 +624,7 @@ class NotificationSystem(commands.Cog):
 
             # If start_date is provided, use it as the base date (for wizard updates)
             if start_date:
-                next_notification = start_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
+                next_notification = tz.localize(start_date.replace(hour=hour, minute=minute, second=0, microsecond=0, tzinfo=None))
             else:
                 # Fall back to existing behavior: keep current date, update time only
                 self.cursor.execute("SELECT next_notification FROM bear_notifications WHERE id = ?", (notification_id,))

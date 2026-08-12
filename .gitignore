@@ -20,3 +20,5 @@
 !.github/workflows/fly-deploy.yml
 !fly.toml
 !version
+!tests/
+!tests/**
