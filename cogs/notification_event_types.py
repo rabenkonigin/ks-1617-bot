@@ -93,7 +93,7 @@ EVENT_CONFIG = {
         "duration_minutes": 60,
         "schedule_type": "global_monthly",
         "fixed_days": "Monthly on Saturday",
-        "reference_date": "2025-11-29",
+        "reference_date": "2026-09-05",
         "cycle_weeks": 4,
         "available_times": ["02:00", "12:00", "14:00", "19:00", "21:00"],
         "description": "Tri-Alliance starts in %t minutes, get ready!",
