@@ -8,14 +8,16 @@ SWORDLAND_URL = "https://vgs-1617.vercel.app/#sword"
 
 
 class KingdomLinks(commands.Cog):
+    bear_group = app_commands.Group(name="bear", description="Bear Hunt commands.")
+
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="bear", description="Get a link to the Bear Hunt tracker.")
-    async def bear(self, interaction: discord.Interaction):
+    @bear_group.command(name="tutorial", description="Get a link to the Bear Hunt tutorial.")
+    async def bear_tutorial(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title=f"{theme.documentIcon} Bear Hunt",
-            description="Open the Bear Hunt tracker.",
+            description="Open the Bear Hunt tutorial.",
             color=theme.emColor1
         )
         view = discord.ui.View()
@@ -27,11 +29,11 @@ class KingdomLinks(commands.Cog):
         ))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-    @app_commands.command(name="swordland", description="Get a link to the Swordland tracker.")
+    @app_commands.command(name="swordland", description="Get a link to the Swordland tutorial.")
     async def swordland(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title=f"{theme.documentIcon} Swordland",
-            description="Open the Swordland tracker.",
+            description="Open the Swordland tutorial.",
             color=theme.emColor1
         )
         view = discord.ui.View()
