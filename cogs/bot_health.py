@@ -141,6 +141,38 @@ def _active_work_summary(bot) -> str | None:
     return " and ".join(parts) if parts else None
 
 
+def _build_restart_confirm_embed(busy: str | None = None) -> discord.Embed:
+    is_windows_host = sys.platform == 'win32' and not is_container()
+    if is_windows_host:
+        tail = (
+            f"\n{theme.warnIcon} **Windows host detected.** The bot will "
+            f"stop here. It does **not** auto-restart. Someone with "
+            f"access to the host needs to start it again with "
+            f"`python main.py`."
+        )
+    else:
+        tail = "The bot will reconnect automatically."
+    busy_note = (
+        f"\n\n{theme.warnIcon} **{busy} right now.** Restarting interrupts it; "
+        f"interrupted queue work is re-queued and resumes on next start "
+        f"(re-run it if it was stuck)."
+        if busy else ""
+    )
+    return discord.Embed(
+        title=f"{theme.warnIcon} Restart Bot",
+        description=(
+            f"Are you sure you want to restart the bot?\n\n"
+            f"**What will happen:**\n"
+            f"• Active sessions and menus will stop working\n"
+            f"• Running tasks will be cancelled\n"
+            f"• Bot will be offline briefly during restart\n"
+            f"• All data is saved — nothing will be lost\n\n"
+            f"{tail}{busy_note}"
+        ),
+        color=0xFF0000,
+    )
+
+
 class BotHealth(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -1710,6 +1742,68 @@ class BotHealth(commands.Cog):
             msg = f"{total} configured"
         return STATUS_HEALTHY, msg
 
+    @discord.app_commands.command(name="restart", description="Restart the bot (Global Admin only).")
+    async def restart(self, interaction: discord.Interaction):
+        is_admin, is_global = PermissionManager.is_admin(interaction.user.id)
+        if not (is_admin and is_global):
+            await interaction.response.send_message(
+                f"{theme.deniedIcon} Only Global Admins can restart the bot.",
+                ephemeral=True,
+            )
+            return
+
+        busy = _active_work_summary(self.bot)
+        await interaction.response.send_message(
+            embed=_build_restart_confirm_embed(busy),
+            view=RestartConfirmView(self, force=bool(busy)),
+            ephemeral=True,
+        )
+
+
+class RestartConfirmView(discord.ui.View):
+    """Standalone Confirm/Cancel prompt for the /restart slash command."""
+
+    def __init__(self, cog: "BotHealth", force: bool = False):
+        super().__init__(timeout=120)
+        self.cog = cog
+
+        confirm_btn = discord.ui.Button(
+            label="Restart Anyway" if force else "Confirm Restart",
+            emoji=theme.warnIcon,
+            style=discord.ButtonStyle.danger,
+        )
+        confirm_btn.callback = self._on_confirm
+        self.add_item(confirm_btn)
+
+        cancel_btn = discord.ui.Button(
+            label="Cancel",
+            emoji=theme.deniedIcon,
+            style=discord.ButtonStyle.secondary,
+        )
+        cancel_btn.callback = self._on_cancel
+        self.add_item(cancel_btn)
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        is_admin, is_global = PermissionManager.is_admin(interaction.user.id)
+        if not (is_admin and is_global):
+            await interaction.response.send_message(
+                f"{theme.deniedIcon} Only Global Admins can restart the bot.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    async def _on_confirm(self, interaction: discord.Interaction):
+        await self.cog.perform_restart(interaction)
+
+    async def _on_cancel(self, interaction: discord.Interaction):
+        for item in self.children:
+            item.disabled = True
+        await interaction.response.edit_message(
+            content=f"{theme.deniedIcon} Restart cancelled.", embed=None, view=self
+        )
+
+
 class HealthMenuView(discord.ui.View):
     """Main Bot Health menu — flat layout with inline restart confirmation."""
 
@@ -1822,37 +1916,6 @@ class HealthMenuView(discord.ui.View):
         )
         back_btn.callback = self._on_back
         self.add_item(back_btn)
-
-    def _build_restart_confirm_embed(self, busy: str | None = None) -> discord.Embed:
-        is_windows_host = sys.platform == 'win32' and not is_container()
-        if is_windows_host:
-            tail = (
-                f"\n{theme.warnIcon} **Windows host detected.** The bot will "
-                f"stop here. It does **not** auto-restart. Someone with "
-                f"access to the host needs to start it again with "
-                f"`python main.py`."
-            )
-        else:
-            tail = "The bot will reconnect automatically."
-        busy_note = (
-            f"\n\n{theme.warnIcon} **{busy} right now.** Restarting interrupts it; "
-            f"interrupted queue work is re-queued and resumes on next start "
-            f"(re-run it if it was stuck)."
-            if busy else ""
-        )
-        return discord.Embed(
-            title=f"{theme.warnIcon} Restart Bot",
-            description=(
-                f"Are you sure you want to restart the bot?\n\n"
-                f"**What will happen:**\n"
-                f"• Active sessions and menus will stop working\n"
-                f"• Running tasks will be cancelled\n"
-                f"• Bot will be offline briefly during restart\n"
-                f"• All data is saved — nothing will be lost\n\n"
-                f"{tail}{busy_note}"
-            ),
-            color=0xFF0000,
-        )
 
     async def _on_cleanup(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -1969,7 +2032,7 @@ class HealthMenuView(discord.ui.View):
         self._force_restart = bool(busy)
         self._build_components()
         await interaction.response.edit_message(
-            embed=self._build_restart_confirm_embed(busy), view=self
+            embed=_build_restart_confirm_embed(busy), view=self
         )
 
     async def _on_confirm_restart(self, interaction: discord.Interaction):
