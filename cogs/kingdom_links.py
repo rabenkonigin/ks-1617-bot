@@ -5,10 +5,13 @@ from .pimp_my_bot import theme
 
 BEAR_URL = "https://vgs-1617.vercel.app/#bear"
 SWORDLAND_URL = "https://vgs-1617.vercel.app/#sword"
+VIKING_URL = "https://vgs-1617.vercel.app/#viking"
+TRI_URL = "https://vgs-1617.vercel.app/#tri"
 
 
 class KingdomLinks(commands.Cog):
     bear_group = app_commands.Group(name="bear", description="Bear Hunt commands.")
+    tri_group = app_commands.Group(name="tri", description="Tri-Alliance commands.")
 
     def __init__(self, bot):
         self.bot = bot
@@ -41,6 +44,38 @@ class KingdomLinks(commands.Cog):
             label="Open Swordland",
             emoji=f"{theme.linkIcon}",
             url=SWORDLAND_URL,
+            style=discord.ButtonStyle.link
+        ))
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @app_commands.command(name="viking", description="Get a link to the Viking Guide.")
+    async def viking(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title=f"{theme.documentIcon} Viking Guide",
+            description="Open the Viking Guide.",
+            color=theme.emColor1
+        )
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(
+            label="Open Viking Guide",
+            emoji=f"{theme.linkIcon}",
+            url=VIKING_URL,
+            style=discord.ButtonStyle.link
+        ))
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @tri_group.command(name="alliance", description="Get a link to the Tri-Alliance guide.")
+    async def tri_alliance(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title=f"{theme.documentIcon} Tri-Alliance",
+            description="Open the Tri-Alliance guide.",
+            color=theme.emColor1
+        )
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(
+            label="Open Tri-Alliance",
+            emoji=f"{theme.linkIcon}",
+            url=TRI_URL,
             style=discord.ButtonStyle.link
         ))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
