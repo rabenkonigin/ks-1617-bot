@@ -81,16 +81,16 @@ class KingdomLinks(commands.Cog):
         ))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
-    @app_commands.command(name="heroes4", description="Get a link to the Kingshot Heroes Season 4 Development Guide.")
+    @app_commands.command(name="heroes4", description="Get a link to the Kingshot Season 4 Heroes Development Guide.")
     async def heroes4(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title=f"{theme.documentIcon} Heroes Season 4 Development Guide",
-            description="Open the Kingshot Heroes Season 4 Development Guide.",
+            title=f"{theme.documentIcon} Season 4 Heroes Development Guide",
+            description="Open the Kingshot Season 4 Heroes Development Guide.",
             color=theme.emColor1
         )
         view = discord.ui.View()
         view.add_item(discord.ui.Button(
-            label="Open Heroes S4 Guide",
+            label="Open Season 4 Heroes Guide",
             emoji=f"{theme.linkIcon}",
             url=HEROES4_URL,
             style=discord.ButtonStyle.link
