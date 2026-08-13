@@ -7,6 +7,7 @@ BEAR_URL = "https://vgs-1617.vercel.app/#bear"
 SWORDLAND_URL = "https://vgs-1617.vercel.app/#sword"
 VIKING_URL = "https://vgs-1617.vercel.app/#viking"
 TRI_URL = "https://vgs-1617.vercel.app/#tri"
+HEROES4_URL = "https://vgs-1617.vercel.app/#s4heroes"
 
 
 class KingdomLinks(commands.Cog):
@@ -76,6 +77,22 @@ class KingdomLinks(commands.Cog):
             label="Open Tri-Alliance",
             emoji=f"{theme.linkIcon}",
             url=TRI_URL,
+            style=discord.ButtonStyle.link
+        ))
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @app_commands.command(name="heroes4", description="Get a link to the Kingshot Heroes Season 4 Development Guide.")
+    async def heroes4(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title=f"{theme.documentIcon} Heroes Season 4 Development Guide",
+            description="Open the Kingshot Heroes Season 4 Development Guide.",
+            color=theme.emColor1
+        )
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(
+            label="Open Heroes S4 Guide",
+            emoji=f"{theme.linkIcon}",
+            url=HEROES4_URL,
             style=discord.ButtonStyle.link
         ))
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
