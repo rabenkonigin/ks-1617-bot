@@ -1794,6 +1794,7 @@ class RestartConfirmView(discord.ui.View):
         return True
 
     async def _on_confirm(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         await self.cog.perform_restart(interaction)
 
     async def _on_cancel(self, interaction: discord.Interaction):
@@ -2036,6 +2037,7 @@ class HealthMenuView(discord.ui.View):
         )
 
     async def _on_confirm_restart(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         await self.cog.perform_restart(interaction)
 
     async def _on_cancel_restart(self, interaction: discord.Interaction):
