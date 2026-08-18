@@ -33,9 +33,19 @@ class Tig(commands.Cog):
     async def tig(self, interaction: discord.Interaction):
         embed = discord.Embed(
             title=f"{theme.documentIcon} Tig's Nicknames",
-            description="\n".join(f"• {nickname}" for nickname in TIG_NICKNAMES),
             color=theme.emColor1
         )
+        column_count = 3
+        column_size = -(-len(TIG_NICKNAMES) // column_count)  # ceil division
+        for i in range(column_count):
+            column = TIG_NICKNAMES[i * column_size:(i + 1) * column_size]
+            if not column:
+                continue
+            embed.add_field(
+                name="​",
+                value="\n".join(f"• {nickname}" for nickname in column),
+                inline=True
+            )
         await interaction.response.send_message(embed=embed)
 
 
