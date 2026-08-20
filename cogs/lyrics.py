@@ -13,7 +13,7 @@ RANT_CHANNEL_ID = 1530447808912560158
 
 DB_PATH = "db/lyrics.sqlite"
 MAX_LINES_PER_ADD = 1000
-RANT_INTERVAL_SECONDS = 7
+RANT_INTERVAL_SECONDS = 3
 
 
 def _init_db():
@@ -55,9 +55,11 @@ def _extract_lines(html: str) -> list[str]:
 
 
 class Lyrics(commands.Cog):
+    stop_group = app_commands.Group(name="stop", description="Stop commands.")
+
     def __init__(self, bot):
         self.bot = bot
-        self._active_channels = set()
+        self._active_tasks = {}
         _init_db()
 
     @app_commands.command(
@@ -70,6 +72,14 @@ class Lyrics(commands.Cog):
         if not any(role.id == LYRICS_EDITOR_ROLE_ID for role in member_roles):
             await interaction.response.send_message(
                 f"{theme.deniedIcon} You are not allowed to use this command.",
+                ephemeral=True,
+            )
+            return
+
+        if "genius.com" in link.lower():
+            await interaction.response.send_message(
+                f"{theme.deniedIcon} Genius links don't work — Genius blocks the bot's "
+                "server with a 403 error. Please use a different lyrics site.",
                 ephemeral=True,
             )
             return
@@ -104,7 +114,7 @@ class Lyrics(commands.Cog):
 
     @app_commands.command(
         name="rants",
-        description="Post a random saved lyric line every 7 seconds for a set duration.",
+        description=f"Post a random saved lyric line every {RANT_INTERVAL_SECONDS} seconds for a set duration.",
     )
     @app_commands.describe(duration="How many minutes to run for (max 30)")
     async def rants(
@@ -118,7 +128,7 @@ class Lyrics(commands.Cog):
             )
             return
 
-        if channel_id in self._active_channels:
+        if channel_id in self._active_tasks:
             await interaction.response.send_message(
                 f"{theme.deniedIcon} A rant session is already running in this channel.",
                 ephemeral=True,
@@ -137,10 +147,32 @@ class Lyrics(commands.Cog):
             f"🎤 Starting a {duration}-minute rant session — a new line every "
             f"{RANT_INTERVAL_SECONDS} seconds!"
         )
-        self._active_channels.add(channel_id)
-        self.bot.loop.create_task(
+        task = self.bot.loop.create_task(
             self._run_rant(interaction.channel, channel_id, lines, duration)
         )
+        self._active_tasks[channel_id] = task
+
+    @stop_group.command(name="rants", description="Stop the currently running rant session.")
+    async def stop_rants(self, interaction: discord.Interaction):
+        channel_id = interaction.channel_id
+        if channel_id != RANT_CHANNEL_ID:
+            await interaction.response.send_message(
+                f"{theme.deniedIcon} This command can only be used in <#{RANT_CHANNEL_ID}>.",
+                ephemeral=True,
+            )
+            return
+
+        task = self._active_tasks.get(channel_id)
+        if not task:
+            await interaction.response.send_message(
+                f"{theme.deniedIcon} No rant session is currently running in this channel.",
+                ephemeral=True,
+            )
+            return
+
+        task.cancel()
+        self._active_tasks.pop(channel_id, None)
+        await interaction.response.send_message(f"{theme.verifiedIcon} Rant session stopped.")
 
     async def _run_rant(self, channel, channel_id: int, lines: list[str], duration_minutes: int):
         try:
@@ -156,8 +188,10 @@ class Lyrics(commands.Cog):
                     await channel.send(line)
                 except discord.HTTPException:
                     pass
+        except asyncio.CancelledError:
+            pass
         finally:
-            self._active_channels.discard(channel_id)
+            self._active_tasks.pop(channel_id, None)
 
 
 async def setup(bot):
