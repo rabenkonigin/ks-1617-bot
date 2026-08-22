@@ -169,9 +169,9 @@ EVENT_CONFIG = {
         "emoji": "⚡",
         "duration_minutes": 60,  # Each boss session ~1 hour
         "schedule_type": "global_3weekly_multiday",
-        "fixed_days": "Every 3 weeks, 3-day window",
-        "reference_date": "2025-12-06",
-        "cycle_weeks": 3,
+        "fixed_days": "Every 4 weeks, 3-day window",
+        "reference_date": "2026-07-25",
+        "cycle_weeks": 4,
         "event_duration_days": 3,
         "time_slots": "5min",
         "max_instances": 5,  # Up to 5 bosses
@@ -370,7 +370,7 @@ def calculate_next_occurrence(event_type: str, from_date: Optional[datetime] = N
         reference = _reference_dt(config, event_type, guild_id)
 
         weeks_diff = (from_date - reference).days // 7
-        cycle_weeks = 3
+        cycle_weeks = config.get("cycle_weeks", 3)
 
         if weeks_diff < 0:
             return reference
